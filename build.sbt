@@ -152,13 +152,13 @@ val `spray-json`     = ("io.spray"  %% "spray-json"     % "1.3.6").cross(CrossVe
 
 lazy val root = project
   .in(file("."))
-  .aggregate(examples, jsonBenchmark)
-  .aggregate(parboiledJVM, parboiledJS, parboiledNative)
-  .aggregate(parboiledCoreJVM, parboiledCoreJS, parboiledCoreNative)
+  //.aggregate(examples, jsonBenchmark)
+  //.aggregate(parboiledJVM, parboiledJS, parboiledNative)
+  .aggregate(parboiledCoreJVM) //, parboiledCoreJS, parboiledCoreNative)
   .settings(commonSettings)
   .settings(releaseSettings)
   .settings(publish / skip := true)
-
+/*
 lazy val examples = project
   .enablePlugins(AutomateHeaderPlugin)
   .dependsOn(parboiledJVM)
@@ -237,14 +237,14 @@ lazy val parboiled = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     }
   )
   .nativeSettings(nativeSettings)
-
+*/
 lazy val generateActionOps = taskKey[Seq[File]]("Generates the ActionOps boilerplate source file")
 
 lazy val parboiledCoreJVM    = parboiledCore.jvm
-lazy val parboiledCoreJS     = parboiledCore.js
-lazy val parboiledCoreNative = parboiledCore.native
+//lazy val parboiledCoreJS     = parboiledCore.js
+//lazy val parboiledCoreNative = parboiledCore.native
 
-lazy val parboiledCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val parboiledCore = crossProject(JVMPlatform) //(JSPlatform, JVMPlatform, NativePlatform)
   .crossType(CrossType.Pure)
   .in(file("parboiled-core"))
   .enablePlugins(AutomateHeaderPlugin)
@@ -260,4 +260,4 @@ lazy val parboiledCore = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     generateActionOps := ActionOpsBoilerplate((Compile / sourceManaged).value, streams.value),
     Compile / sourceGenerators += generateActionOps.taskValue
   )
-  .nativeSettings(nativeSettings)
+  //.nativeSettings(nativeSettings)
