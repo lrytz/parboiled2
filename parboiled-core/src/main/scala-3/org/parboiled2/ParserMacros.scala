@@ -37,14 +37,28 @@ private[parboiled2] trait RuleRunnable {
 
   /** THIS IS NOT PUBLIC API and might become hidden in future. Use only if you know what you are doing!
     */
-  implicit class Runnable[L <: HList](rule: RuleN[L]) {
-    def run()(implicit scheme: Parser.DeliveryScheme[L]): scheme.Result = ???
-  }
+  extension [L <: HList](inline rule: RuleN[L])
+    inline def run()(using scheme: Parser.DeliveryScheme[L]): scheme.Result = ${
+      ParserMacros.runImpl[L, scheme.Result]()('rule, 'scheme)
+    }
 }
 
 object ParserMacros {
   import scala.quoted._
   import scala.compiletime._
+
+  def runImpl[L <: HList: Type, R: Type]()(ruleExpr: Expr[RuleN[L]], schemeExpr: Expr[Parser.DeliveryScheme[L]])(using
+      Quotes
+  ): Expr[R] =
+    import quotes.reflect.*
+    ruleExpr.asTerm match
+      case Inlined(_, _, sel @ Select(parser, _)) =>
+        val parserExpr = parser.asExprOf[Parser]
+//        def localRuleExpr(p: Expr[Parser]) = Select(p.asTerm, sel.symbol).asExprOf[RuleN[L]]
+//        val res                            = '{ val p = $parserExpr; p.__run[L](${ localRuleExpr('p) })($schemeExpr).asInstanceOf[R] }
+        val res = '{ val p = $parserExpr; p.__run[L]($ruleExpr)($schemeExpr).asInstanceOf[R] }
+        println(res.show)
+        res
 
   def ruleImpl[I <: HList: Type, O <: HList: Type](r: Expr[Rule[I, O]])(using Quotes): Expr[Rule[I, O]] =
     nameRuleImpl(Expr("todo"))(r)
