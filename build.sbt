@@ -64,6 +64,7 @@ val commonSettings = Seq(
     }
   },
   Compile / console / scalacOptions ~= (_ filterNot (o ⇒ o == "-Ywarn-unused-import" || o == "-Xfatal-warnings")),
+  Compile / console / scalacOptions += "-Xprint:inlining",
   Test / console / scalacOptions ~= (_ filterNot (o ⇒ o == "-Ywarn-unused-import" || o == "-Xfatal-warnings")),
   Compile / doc / scalacOptions += "-no-link-warnings",
   sourcesInBase := false,
