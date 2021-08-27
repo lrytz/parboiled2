@@ -52,13 +52,17 @@ object ParserMacros {
   ): Expr[R] =
     import quotes.reflect.*
     ruleExpr.asTerm match
-      case Inlined(_, _, sel @ Select(parser, _)) =>
-        val parserExpr = parser.asExprOf[Parser]
-//        def localRuleExpr(p: Expr[Parser]) = Select(p.asTerm, sel.symbol).asExprOf[RuleN[L]]
-//        val res                            = '{ val p = $parserExpr; p.__run[L](${ localRuleExpr('p) })($schemeExpr).asInstanceOf[R] }
-        val res = '{ val p = $parserExpr; p.__run[L]($ruleExpr)($schemeExpr).asInstanceOf[R] }
-        println(res.show)
-        res
+      case Inlined(_, _, sel @ Select(parser, _)) if parser.tpe <:< TypeRepr.of[Parser] =>
+        parser.tpe.asType match
+          case '[pT] =>
+            val parserExpr                 = parser.asExprOf[pT]
+            def localRuleExpr(p: Expr[pT]) = Select(p.asTerm, sel.symbol).asExprOf[RuleN[L]]
+            val res = '{
+              val p: pT = $parserExpr
+              p.asInstanceOf[Parser].__run[L](${ localRuleExpr('p) })($schemeExpr).asInstanceOf[R]
+            }
+            println(res.show)
+            res
 
   def ruleImpl[I <: HList: Type, O <: HList: Type](r: Expr[Rule[I, O]])(using Quotes): Expr[Rule[I, O]] =
     nameRuleImpl(Expr("todo"))(r)
